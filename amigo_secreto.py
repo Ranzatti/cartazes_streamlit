@@ -2,14 +2,13 @@ import random
 import openpyxl
 import os
 import time
-import pywhatkit as kt
 import pandas as pd
 import pyautogui
 import keyboard as k
-from datetime import datetime
 import urllib
 import webbrowser as web
 import schedule
+import tkinter as tk
 
 def amigo_secreto(participantes):
     random.shuffle(participantes)
@@ -21,12 +20,23 @@ def amigo_secreto(participantes):
 def enviarZap():
     dados_excel = pd.read_excel('amigosecreto2023.xlsx')
 
+    root = tk.Tk()
+
+    # Obtém a largura e a altura da tela
+    largura_tela = root.winfo_screenwidth()
+    altura_tela = root.winfo_screenheight()
+
+    # Fecha a janela tkinter temporária
+    root.destroy()
+
     for i, nome in enumerate(dados_excel['Nome']):
         sorteado = dados_excel.loc[i, "Sorteado"]
         telefone = "+55" + str(dados_excel.loc[i, "Telefone"])
 
-        # pyautogui.click(1200, 500)
-        pyautogui.click(600, 500)
+        x = 600
+        if altura_tela == 1080:
+            x = 1200
+        pyautogui.click(x, 500)
         time.sleep(300)
 
         mensagem = f"""
@@ -50,26 +60,19 @@ def enviarZap():
         Abraço
         """
 
-        # print(texto)
-        # agora = datetime.now()
-        # hora = agora.hour
-        # min = agora.minute + 1
-
         texto = urllib.parse.quote(mensagem)
 
         web.open("https://web.whatsapp.com/send?phone="+telefone+"&text="+texto)
 
-        # kt.sendwhatmsg(telefone, texto, hora, min, 15)
-        # kt.sendwhatmsg_instantly(telefone, texto, 15)
-        # pyautogui.click(1200, 980)
         time.sleep(20)
-        pyautogui.click(600, 700)
+        pyautogui.click(x, 700)
         k.press_and_release('enter')
 
         print('Enviado com sucesso para ', nome)
 
 def gerar_arquivo():
     print('Gerando Arquivo...')
+
     lista_participantes = {
                         'Fernanda' : '61992856117',
                         'Marlene' : '34988614573',
@@ -158,13 +161,8 @@ def gerar_arquivo():
 clear = lambda: os.system('cls')
 clear()
 
+# programado para começar às 02:50 da manha de sexta
 schedule.every().friday.at("02:50").do(gerar_arquivo)
 
 while 1:
     schedule.run_pending()
-
-# if gerar_arquivo():
-#     # enviarZap()
-#     print('Parece que deu tudo certo!')
-# else:
-#     print('Ops! deu ruim')
