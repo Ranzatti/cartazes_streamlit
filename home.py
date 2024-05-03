@@ -6,10 +6,15 @@ from st_aggrid.grid_options_builder import GridOptionsBuilder
 from st_aggrid.shared import JsCode
 
 st.set_page_config(
-    page_title="Posters de Jornal",
+    page_title="Coleção de Posters de Jornal",
     page_icon="🧊",
     layout="wide",
     initial_sidebar_state="expanded",
+    menu_items={
+        'Get Help': 'https://www.extremelycoolapp.com/help',
+        'Report a bug': "https://www.extremelycoolapp.com/bug",
+        'About': "# This is a header. This is an *extremely* cool app!"
+    }
 )
 
 st.subheader("Coleção de Posters", divider='rainbow')
@@ -26,7 +31,7 @@ link_imagem = []
 link_tmdb = []
 link_imdb = []
 
-# custom_css = {".ag-header-cell-text": {"font-size": "20px", 'text-overflow': 'revert;', 'font-weight': 700},
+#custom_css = {".ag-header-cell-text": {"font-size": "20px", 'text-overflow': 'revert;', 'font-weight': 1700},
 #       ".ag-theme-streamlit": {'transform': "scale(0.8)", "transform-origin": '0 0'}}
 
 cell_renderer =  JsCode("""
@@ -91,7 +96,6 @@ for linha in dados:
 df=pd.DataFrame({
     "Ano":ano,
     "TMDB":tmdb,
-    "IMDB":imdb,
     "Título Original":titulo_original,
     "Título Traduzido":titulo_traduzido,
     "Pasta":pasta,
@@ -100,14 +104,15 @@ df=pd.DataFrame({
     "Link TMDB":link_tmdb,
     "Link IMDB":link_imdb,
 })
+    #"IMDB":imdb,
 
 gb = GridOptionsBuilder.from_dataframe(df, theme='streamlit')
 gb.configure_pagination(paginationAutoPageSize=False, paginationPageSize=total_linhas_pagina_ag_grid)
 gb.configure_column('Ano', minWidth=70, maxWidth=70)
-gb.configure_column('Título Original', minWidth=250, maxWidth=250)
-gb.configure_column('Título Traduzido', minWidth=250, maxWidth=250)
 gb.configure_column('TMDB', minWidth=80, maxWidth=80, editable=True)
-gb.configure_column('IMDB', minWidth=100,maxWidth=100)
+gb.configure_column('Título Original', minWidth=350, maxWidth=350, editable=True)
+gb.configure_column('Título Traduzido', minWidth=350, maxWidth=350, editable=True)
+#gb.configure_column('IMDB', minWidth=100,maxWidth=100)
 gb.configure_column('Página', minWidth=50, maxWidth=80)
 gb.configure_column('Pasta', minWidth=50, maxWidth=70)
 gb.configure_column('Imagem', cellRenderer=cell_renderer, minWidth=90, maxWidth=90)
@@ -116,12 +121,12 @@ gb.configure_column('Link IMDB', cellRenderer=cell_renderer_imdb, minWidth=120,m
 gridoption = gb.build()
 
 
-# col1, col2, col3 = st.columns([1,10,1])
-# with col2:
-AgGrid(df,
-        gridOptions=gridoption,
-        # custom_css=custom_css,
-        columns_auto_size_mode=ColumnsAutoSizeMode.FIT_ALL_COLUMNS_TO_VIEW, 
-        updateMode=GridUpdateMode.VALUE_CHANGED,
-        allow_unsafe_jscode=True
-        )
+col1, col2, col3 = st.columns([0.5,500,0.5])
+with col2:
+  AgGrid(df,
+          gridOptions=gridoption,
+          #custom_css=custom_css,
+          columns_auto_size_mode=ColumnsAutoSizeMode.FIT_CONTENTS, 
+          updateMode=GridUpdateMode.VALUE_CHANGED,
+          allow_unsafe_jscode=True
+          )
