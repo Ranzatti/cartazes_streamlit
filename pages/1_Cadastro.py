@@ -16,9 +16,8 @@ st.subheader("Cadastro de Posters", divider='rainbow')
 colinicio, colinicio2 = st.columns((1, 5))
 with colinicio:
     tmdb = st.text_input('TMDB')
-
 if tmdb:
-    dados_filme = sql.get_dados_poster(tmdb)
+    dados_filme = sql.get_dados_cartazes(tmdb)
     if dados_filme:
         #st.write(dados_filme)
         with colinicio2:
@@ -107,19 +106,51 @@ if tmdb:
         st.divider()
         # ate aqui
 
+        # pegando o elento
+        resposta = rq.get(f'https://api.themoviedb.org/3/movie/{tmdb}/credits?api_key=2b0120b7e901bbe70b631b2273fe28c9')
+        if resposta.status_code == 200:
+            imagens = resposta.json()
+            cast = imagens['cast']
+
+            # Exibindo os elenco horizontalmente com colunas
+            st.subheader("Elenco Principal")
+
+            # Defina um tamanho maior para as colunas
+            num_colunas = 8  # Defina quantas colunas você quer por linha
+            cols = st.columns(num_colunas)
+
+            # carrego todos os posters não nulos num vetor
+            atores_com_imagem = [ator for ator in cast if ator.get('profile_path')]
+
+            # varro o vetor e mostro as imagens
+            for i, ator in enumerate(atores_com_imagem):
+                img_url = f"https://image.tmdb.org/t/p/w600_and_h900_bestv2{ator['profile_path']}"
+
+                # Usa um espaçamento e ajusta a largura da imagem
+                with cols[i % num_colunas]:  # Adiciona a imagem na coluna correspondente
+                    st.image(img_url, width=90)  # Ajusta a largura da imagem
+                    # st.write(ator['name'])  # Exibe o nome do ator abaixo da imagem
+                    st.markdown(f"<p style='font-size:10px;  text-align: center;'>{ator['name']}</p>",
+                                unsafe_allow_html=True)
+
+            # Se você quiser adicionar uma nova linha após cada conjunto de imagens
+            if len(cast) > num_colunas:
+                st.write("")
+        st.divider()
+
         #Botoes
         col20, col21, col23 = st.columns([2, 2, 8])
         with col20:
             if st.button('Atualizar', type="primary"):
                 if bModoIncluir:
-                    if sql.insere(tmdb, imdb, titulo_original, titulo_traduzido, pagina, pasta, data_release, link_imagem, sinopse, cores):
+                    if sql.insere_cartazes(tmdb, imdb, titulo_original, titulo_traduzido, pagina, pasta, data_release, link_imagem, sinopse, cores):
                         with col23:                        
                             st.success('Poster inserido com Sucesso!')
                     else:
                         with col23:                        
                             st.error('Ops deu erro')
                 else:
-                    if sql.update(tmdb, imdb, titulo_original, titulo_traduzido, pagina, pasta, data_release, link_imagem, sinopse, cores):
+                    if sql.update_cartazes(tmdb, imdb, titulo_original, titulo_traduzido, pagina, pasta, data_release, link_imagem, sinopse, cores):
                         with col23:                        
                             st.success('Poster alterado com Sucesso!')
                     else:

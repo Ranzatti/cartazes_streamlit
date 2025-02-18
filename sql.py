@@ -1,7 +1,7 @@
 from connection import conn
 import re
 
-def get_all_poster():
+def get_all_cartazes():
         
         cursor = conn.cursor()
 
@@ -9,7 +9,7 @@ def get_all_poster():
             SELECT
                 *
             FROM
-                POSTER
+                CARTAZES
             ORDER BY
                 ANO
             """
@@ -18,7 +18,7 @@ def get_all_poster():
         cursor.close()
         return dados
 
-def get_dados_poster(tmdb):
+def get_dados_cartazes(tmdb):
         
         cursor = conn.cursor()
 
@@ -26,7 +26,7 @@ def get_dados_poster(tmdb):
             SELECT
                 *
             FROM
-                POSTER
+                CARTAZES
             WHERE
                 TMDB = %s
             """
@@ -36,7 +36,7 @@ def get_dados_poster(tmdb):
 
         return dados
 
-def insere(tmdb, imdb, titulo_original, titulo_traduzido, pagina, pasta, data_release, link_imagem, sinopse, cores ):
+def insere_cartazes(tmdb, imdb, titulo_original, titulo_traduzido, pagina, pasta, data_release, link_imagem, sinopse, cores):
         ano = data_release.year
 
         if pagina == '':
@@ -50,7 +50,7 @@ def insere(tmdb, imdb, titulo_original, titulo_traduzido, pagina, pasta, data_re
 
         cursor = conn.cursor()
         try:
-            cursor.execute("INSERT INTO poster (tmdb, imdb, titulo_original, titulo_traduzido, ano, pagina, pasta, data_release, link_imagem, sinopse, cores) VALUES (%s, %s, %s,%s, %s, %s, %s, %s, %s, %s, %s)", [tmdb, imdb, titulo_original.upper(), titulo_traduzido, ano, pagina, pasta, data_release, link_imagem, sinopse, cores])
+            cursor.execute("INSERT INTO CARTAZES (tmdb, imdb, titulo_original, titulo_traduzido, ano, pagina, pasta, data_release, link_imagem, sinopse, cores) VALUES (%s, %s, %s,%s, %s, %s, %s, %s, %s, %s, %s)", [tmdb, imdb, titulo_original.upper(), titulo_traduzido, ano, pagina, pasta, data_release, link_imagem, sinopse, cores])
             cursor.close()
             conn.commit()
             return True
@@ -58,7 +58,7 @@ def insere(tmdb, imdb, titulo_original, titulo_traduzido, pagina, pasta, data_re
             print(error)
             return False
         
-def update(tmdb, imdb, titulo_original, titulo_traduzido, pagina, pasta, data_release, link_imagem, sinopse, cores ):
+def update_cartazes(tmdb, imdb, titulo_original, titulo_traduzido, pagina, pasta, data_release, link_imagem, sinopse, cores):
         ano = data_release.year
 
         if pagina == '':
@@ -72,7 +72,7 @@ def update(tmdb, imdb, titulo_original, titulo_traduzido, pagina, pasta, data_re
 
         cursor = conn.cursor()
         try:
-            cursor.execute(""" UPDATE poster SET 
+            cursor.execute(""" UPDATE CARTAZES SET 
                 imdb = %s,
                 titulo_original = %s,
                 titulo_traduzido = %s,
