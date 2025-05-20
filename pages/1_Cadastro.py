@@ -156,7 +156,7 @@ if tmdb:
                     else:
                         with col23:                        
                             st.error('Ops deu erro')  
-                #switch_page("home")              
+                switch_page("home")
         with col21:
             if st.button('Home'):
                 switch_page("home")
