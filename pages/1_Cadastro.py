@@ -17,7 +17,7 @@ colinicio, colinicio2 = st.columns((1, 5))
 with colinicio:
     tmdb = st.text_input('TMDB')
 if tmdb:
-    dados_filme = sql.get_dados_cartazes(tmdb)
+    dados_filme = sql.get_dados_by_tmdb(tmdb)
     if dados_filme:
         #st.write(dados_filme)
         with colinicio2:

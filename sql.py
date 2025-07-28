@@ -25,12 +25,12 @@ def get_cartazes(anos, cores, pasta):
 
     if len(cores) > 0:
         if len(where) > 0:
-            where = where + " OR "
+            where = where + " and "
         where = where + f" CORES IN ({', '.join(f"'{cores}'" for cores in cores)})"
 
     if len(pasta) > 0:
         if len(where) > 0:
-            where = where + " OR "
+            where = where + " and "
         where = where + f" PASTA IN ({', '.join(f"{pasta}" for pasta in pasta)})"
 
     consulta = f"SELECT * FROM CARTAZES WHERE {where}  ORDER BY ANO, DATA_RELEASE, TMDB"
@@ -60,7 +60,7 @@ def get_pasta():
     return dados
 
 @streamlit.cache_data
-def get_dados_cartazes(tmdb):
+def get_dados_by_tmdb(tmdb):
     consulta = f"SELECT * FROM CARTAZES WHERE TMDB = %s"
     cursor = conn.cursor()
     cursor.execute(consulta, (tmdb,))
@@ -68,6 +68,14 @@ def get_dados_cartazes(tmdb):
     cursor.close()
     return dados
 
+@streamlit.cache_data
+def get_dados_by_id(id):
+    consulta = f"SELECT * FROM CARTAZES WHERE ID = %s"
+    cursor = conn.cursor()
+    cursor.execute(consulta, (id,))
+    dados = cursor.fetchall()
+    cursor.close()
+    return dados
 
 def insere_cartazes(tmdb, imdb, titulo_original, titulo_traduzido, pagina, pasta, data_release, link_imagem, sinopse,
                     cores):

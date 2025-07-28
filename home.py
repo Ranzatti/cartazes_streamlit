@@ -3,7 +3,7 @@ import streamlit as st
 import altair as alt
 
 import sql
-from sql import get_pasta
+from sql import get_pasta, get_anos
 
 st.set_page_config(
     page_title="Coleção de Cartazes de Jornal",
@@ -19,10 +19,9 @@ st.set_page_config(
 
 st.subheader("Coleção de Posters", divider='rainbow')
 
-anosCartazes = sql.get_anos()
 anos_select = st.sidebar.multiselect('Selecione o ano desejado',
                                      placeholder="Selecione o ano desejado",
-                                     options=anosCartazes,
+                                     options=get_anos(),
                                      label_visibility="collapsed")
 
 cores_select = st.sidebar.multiselect('Selecione a Cor desejada',
