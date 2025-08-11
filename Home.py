@@ -1,12 +1,13 @@
 from datetime import datetime
 
+import sql
 import pandas as pd
 import streamlit as st
 import altair as alt
 from st_aggrid import GridOptionsBuilder, AgGrid, GridUpdateMode, JsCode
-
-import sql
 from sql import get_pasta, get_anos
+
+##############  para rodar o programa execute no console:  streamlit run Home.py ######################
 
 st.set_page_config(
     page_title="Coleção de Cartazes de Jornal",
