@@ -1,18 +1,19 @@
+import re
+
 import streamlit
 
 from connection import conn
-import re
 
-@streamlit.cache_data
+TABELA = "posters"
+
 def get_all_cartazes():
-    consulta = f"SELECT * FROM CARTAZES ORDER BY ANO, DATA_RELEASE, TMDB"
+    consulta = f"SELECT * FROM {TABELA} ORDER BY ANO, DATA_RELEASE, TMDB"
     cursor = conn.cursor()
     cursor.execute(consulta)
     dados = cursor.fetchall()
     cursor.close()
     return dados
 
-@streamlit.cache_data
 def get_cartazes(anos, cores, pasta):
     if (len(cores) == 0 and len(anos) == 0 and len(pasta) == 0):
         return get_all_cartazes()
@@ -33,7 +34,7 @@ def get_cartazes(anos, cores, pasta):
             where = where + " and "
         where = where + f" PASTA IN ({', '.join(f"{pasta}" for pasta in pasta)})"
 
-    consulta = f"SELECT * FROM CARTAZES WHERE {where}  ORDER BY ANO, DATA_RELEASE, TMDB"
+    consulta = f"SELECT * FROM {TABELA} WHERE {where}  ORDER BY ANO, DATA_RELEASE, TMDB"
 
     cursor = conn.cursor()
     cursor.execute(consulta)
@@ -41,106 +42,129 @@ def get_cartazes(anos, cores, pasta):
     cursor.close()
     return dados
 
-@streamlit.cache_data
 def get_anos():
-    consulta = f"SELECT distinct ANO FROM CARTAZES ORDER BY 1"
+    consulta = f"SELECT distinct ANO FROM {TABELA} ORDER BY 1"
     cursor = conn.cursor()
     cursor.execute(consulta)
     dados = [str(row[0]) for row in cursor.fetchall()]
     cursor.close()
     return dados
 
-@streamlit.cache_data
 def get_pasta():
-    consulta = f"SELECT distinct PASTA FROM CARTAZES ORDER BY 1"
+    consulta = f"SELECT distinct PASTA FROM {TABELA} ORDER BY 1"
     cursor = conn.cursor()
     cursor.execute(consulta)
     dados = [str(row[0]) for row in cursor.fetchall()]
     cursor.close()
     return dados
 
-@streamlit.cache_data
 def get_dados_by_tmdb(tmdb):
-    consulta = f"SELECT * FROM CARTAZES WHERE TMDB = %s"
+    consulta = f"SELECT * FROM {TABELA} WHERE TMDB = %s"
+    param=[tmdb]
     cursor = conn.cursor()
-    cursor.execute(consulta, (tmdb,))
+    cursor.execute(consulta, param)
     dados = cursor.fetchall()
     cursor.close()
     return dados
 
-@streamlit.cache_data
 def get_dados_by_id(id):
-    consulta = f"SELECT * FROM CARTAZES WHERE ID = %s"
+    consulta = f"SELECT * FROM {TABELA} WHERE ID = %s"
+    param=[id]
     cursor = conn.cursor()
-    cursor.execute(consulta, (id,))
+    cursor.execute(consulta, param)
     dados = cursor.fetchall()
     cursor.close()
     return dados
 
-def insere_cartazes(tmdb, imdb, titulo_original, titulo_traduzido, pagina, pasta, data_release, link_imagem, sinopse,
-                    cores):
-    ano = data_release.year
-
-    if pagina == '':
-        pagina = None
-    if pasta == '':
-        pasta = None
-
-    sinopse = re.sub(r"\n", "", sinopse)
-    titulo_original = titulo_original.upper()
-    titulo_traduzido = titulo_traduzido.upper()
-
-    try:
-        cursor = conn.cursor()
-        cursor.execute(
-            "INSERT INTO CARTAZES (tmdb, imdb, titulo_original, titulo_traduzido, ano, pagina, pasta, data_release, link_imagem, sinopse, cores) VALUES (%s, %s, %s,%s, %s, %s, %s, %s, %s, %s, %s)",
-            [tmdb, imdb, titulo_original.upper(), titulo_traduzido, ano, pagina, pasta, data_release, link_imagem, sinopse, cores])
-        cursor.close()
-        conn.commit()
-        return True
-    except (Exception, conn.Error) as error:
-        print(error)
-        return False
-
-
-def update_cartazes(tmdb, imdb, titulo_original, titulo_traduzido, pagina, pasta, data_release, link_imagem, sinopse,
-                    cores):
-    ano = data_release.year
-
-    if pagina == '':
-        pagina = None
-    if pasta == '':
-        pasta = None
-
-    sinopse = re.sub(r"\n", "", sinopse)
-    titulo_original = titulo_original.upper()
-    titulo_traduzido = titulo_traduzido.upper()
-
-    try:
-        cursor = conn.cursor()
-        cursor.execute(""" UPDATE CARTAZES SET 
-                imdb = %s,
-                titulo_original = %s,
-                titulo_traduzido = %s,
-                ano = %s,
-                pagina = %s,
-                pasta = %s,
-                data_release = %s,
-                link_imagem = %s,
-                sinopse = %s,
-                cores = %s
-                WHERE TMDB = %s """,[imdb, titulo_original, titulo_traduzido, ano, pagina, pasta, data_release, link_imagem, sinopse, cores, tmdb])
-        cursor.close()
-        conn.commit()
-        return True
-    except (Exception, conn.Error) as error:
-        print(error)
-        return False
-
-@streamlit.cache_data
 def graficoAnoPoster():
     cursor = conn.cursor()
-    cursor.execute("SELECT coalesce(ANO, 2020) AS ANO, COUNT(*) AS QTDE FROM CARTAZES GROUP BY ANO ORDER BY 1")
+    cursor.execute(f"SELECT coalesce(ANO, 2020) AS ANO, COUNT(*) AS QTDE FROM {TABELA} GROUP BY ANO ORDER BY 1")
     dados = cursor.fetchall()
     cursor.close()
     return dados
+
+def merge(id, tmdb, imdb, titulo_original, titulo_traduzido, pagina, pasta, data_release, link_imagem, sinopse, cores):
+    # print("Entrei")
+
+    try:
+        cursor = conn.cursor()
+
+        ano = data_release.year
+
+        if pagina == '':
+            pagina = None
+        if pasta == '':
+            pasta = None
+
+        sinopse = re.sub(r"\n", "", sinopse)
+        titulo_original = titulo_original.upper()
+        titulo_traduzido = titulo_traduzido.upper()
+
+        dados_filme = get_dados_by_id(id)
+        if dados_filme:
+            sql = f"""
+            UPDATE {TABELA}
+            SET imdb            = %s,
+                titulo_original = %s,
+                titulo_traduzido= %s,
+                ano             = %s,
+                pagina          = %s,
+                pasta           = %s,
+                data_release    = %s,
+                link_imagem     = %s,
+                sinopse         = %s,
+                cores           = %s
+            WHERE id = %s
+            """
+
+            params = [
+                imdb,
+                titulo_original,
+                titulo_traduzido,
+                ano,
+                pagina,
+                pasta,
+                data_release,
+                link_imagem,
+                sinopse,
+                cores,
+                id
+            ]
+        else:
+            sql = f"""
+            INSERT INTO {TABELA} (
+                tmdb,
+                imdb,
+                titulo_original,
+                titulo_traduzido,
+                ano,
+                pagina,
+                pasta,
+                data_release,
+                link_imagem,
+                sinopse,
+                cores
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            """
+
+            params = [
+                tmdb,
+                imdb,
+                titulo_original,
+                titulo_traduzido,
+                ano,
+                pagina,
+                pasta,
+                data_release,
+                link_imagem,
+                sinopse,
+                cores
+            ]
+
+        cursor.execute(sql, params)
+        cursor.close()
+        conn.commit()
+        return True
+    except (Exception, conn.Error) as error:
+        print(error)
+        return False
