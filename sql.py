@@ -1,10 +1,8 @@
 import re
-
-import streamlit
-
 from connection import conn
 
-TABELA = "posters"
+# TABELA = "CARTAZES"
+TABELA = "POSTERS"
 
 def get_all_cartazes():
     consulta = f"SELECT * FROM {TABELA} ORDER BY ANO, DATA_RELEASE, TMDB"
@@ -14,49 +12,49 @@ def get_all_cartazes():
     cursor.close()
     return dados
 
-def get_cartazes(anos, cores, pasta):
-    if (len(cores) == 0 and len(anos) == 0 and len(pasta) == 0):
-        return get_all_cartazes()
+# def get_cartazes(anos, cores, pasta):
+#     if (len(cores) == 0 and len(anos) == 0 and len(pasta) == 0):
+#         return get_all_cartazes()
+#
+#     where = ""
+#     if len(anos) > 0:
+#         where = f" ANO IN ({', '.join(f"'{ano}'" for ano in anos)})"
+#         if 'None' in anos:
+#             where = " ANO is null"
+#
+#     if len(cores) > 0:
+#         if len(where) > 0:
+#             where = where + " and "
+#         where = where + f" CORES IN ({', '.join(f"'{cores}'" for cores in cores)})"
+#
+#     if len(pasta) > 0:
+#         if len(where) > 0:
+#             where = where + " and "
+#         where = where + f" PASTA IN ({', '.join(f"{pasta}" for pasta in pasta)})"
+#
+#     consulta = f"SELECT * FROM {TABELA} WHERE {where}  ORDER BY ANO, DATA_RELEASE, TMDB"
+#
+#     cursor = conn.cursor()
+#     cursor.execute(consulta)
+#     dados = cursor.fetchall()
+#     cursor.close()
+#     return dados
 
-    where = ""
-    if len(anos) > 0:
-        where = f" ANO IN ({', '.join(f"'{ano}'" for ano in anos)})"
-        if 'None' in anos:
-            where = " ANO is null"
-
-    if len(cores) > 0:
-        if len(where) > 0:
-            where = where + " and "
-        where = where + f" CORES IN ({', '.join(f"'{cores}'" for cores in cores)})"
-
-    if len(pasta) > 0:
-        if len(where) > 0:
-            where = where + " and "
-        where = where + f" PASTA IN ({', '.join(f"{pasta}" for pasta in pasta)})"
-
-    consulta = f"SELECT * FROM {TABELA} WHERE {where}  ORDER BY ANO, DATA_RELEASE, TMDB"
-
-    cursor = conn.cursor()
-    cursor.execute(consulta)
-    dados = cursor.fetchall()
-    cursor.close()
-    return dados
-
-def get_anos():
-    consulta = f"SELECT distinct ANO FROM {TABELA} ORDER BY 1"
-    cursor = conn.cursor()
-    cursor.execute(consulta)
-    dados = [str(row[0]) for row in cursor.fetchall()]
-    cursor.close()
-    return dados
-
-def get_pasta():
-    consulta = f"SELECT distinct PASTA FROM {TABELA} ORDER BY 1"
-    cursor = conn.cursor()
-    cursor.execute(consulta)
-    dados = [str(row[0]) for row in cursor.fetchall()]
-    cursor.close()
-    return dados
+# def get_anos():
+#     consulta = f"SELECT distinct ANO FROM {TABELA} ORDER BY 1"
+#     cursor = conn.cursor()
+#     cursor.execute(consulta)
+#     dados = [str(row[0]) for row in cursor.fetchall()]
+#     cursor.close()
+#     return dados
+#
+# def get_pasta():
+#     consulta = f"SELECT distinct PASTA FROM {TABELA} ORDER BY 1"
+#     cursor = conn.cursor()
+#     cursor.execute(consulta)
+#     dados = [str(row[0]) for row in cursor.fetchall()]
+#     cursor.close()
+#     return dados
 
 def get_dados_by_tmdb(tmdb):
     consulta = f"SELECT * FROM {TABELA} WHERE TMDB = %s"
@@ -78,14 +76,12 @@ def get_dados_by_id(id):
 
 def graficoAnoPoster():
     cursor = conn.cursor()
-    cursor.execute(f"SELECT coalesce(ANO, 2020) AS ANO, COUNT(*) AS QTDE FROM {TABELA} GROUP BY ANO ORDER BY 1")
+    cursor.execute(f"SELECT coalesce(ANO, 9999) AS ANO, COUNT(*) AS QTDE FROM {TABELA} GROUP BY ANO ORDER BY 1")
     dados = cursor.fetchall()
     cursor.close()
     return dados
 
 def merge(id, tmdb, imdb, titulo_original, titulo_traduzido, pagina, pasta, data_release, link_imagem, sinopse, cores):
-    # print("Entrei")
-
     try:
         cursor = conn.cursor()
 

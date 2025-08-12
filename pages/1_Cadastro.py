@@ -109,38 +109,7 @@ st.subheader("Cadastro de Posters", divider='rainbow')
 # ------------------- TELA DE BUSCA -------------------
 if pagina == "busca":
     escolha = st.radio("Opção de Busca", ["TMDB", "Titulo Original"], horizontal=True)
-    if(escolha == "Titulo"):
-        query = st.text_input("Digite o nome do filme (mínimo 2 caracteres)")
-        if query and len(query) >= 2:
-            try:
-                with st.spinner("Buscando no TMDb..."):
-                    results = search_movies(query)
-            except Exception as e:
-                st.error(f"Erro ao buscar filmes: {e}")
-                results = []
-
-            if not results:
-                st.info("Nenhum filme encontrado.")
-            else:
-                for movie in results[:10]:
-                    mid = str(movie.get("id"))
-                    title = movie.get("title") or movie.get("original_title", "—")
-                    year = (movie.get("release_date") or "")[:4] or "—"
-                    poster_path = movie.get("poster_path")
-                    poster_url = f"{TMDB_IMAGE_BASE}{poster_path}" if poster_path else None
-
-                    cols = st.columns([1, 6])
-                    with cols[0]:
-                        if poster_url:
-                            st.image(poster_url, width=60)
-                        else:
-                            st.write("Sem imagem")
-                    with cols[1]:
-                        if st.button(f"ID: {mid} — {title} ({year})", key=mid):
-                            st.query_params["pagina"] = "cadastro"
-                            st.query_params["id"] = mid
-                            st.rerun()
-    else:
+    if(escolha == "TMDB"):
         col50, col51 = st.columns((0.5, 1))
         with col50:
             query = st.text_input("Digite o TMDB")
@@ -186,6 +155,37 @@ if pagina == "busca":
                         st.query_params["pagina"] = "cadastro"
                         st.query_params["id"] = mid
                         st.rerun()
+    else:
+        query = st.text_input("Digite o nome do filme (mínimo 2 caracteres)")
+        if query and len(query) >= 2:
+            try:
+                with st.spinner("Buscando no TMDb..."):
+                    results = search_movies(query)
+            except Exception as e:
+                st.error(f"Erro ao buscar filmes: {e}")
+                results = []
+
+            if not results:
+                st.info("Nenhum filme encontrado.")
+            else:
+                for movie in results[:10]:
+                    mid = str(movie.get("id"))
+                    title = movie.get("title") or movie.get("original_title", "—")
+                    year = (movie.get("release_date") or "")[:4] or "—"
+                    poster_path = movie.get("poster_path")
+                    poster_url = f"{TMDB_IMAGE_BASE}{poster_path}" if poster_path else None
+
+                    cols = st.columns([1, 6])
+                    with cols[0]:
+                        if poster_url:
+                            st.image(poster_url, width=60)
+                        else:
+                            st.write("Sem imagem")
+                    with cols[1]:
+                        if st.button(f"ID: {mid} — {title} ({year})", key=mid):
+                            st.query_params["pagina"] = "cadastro"
+                            st.query_params["id"] = mid
+                            st.rerun()
 
 # ------------------- TELA DE CADASTRO -------------------
 elif pagina == "cadastro" and movie_id:
@@ -197,13 +197,11 @@ elif pagina == "cadastro" and movie_id:
         vidFilme = dados_filme[0][0]
         vTMDB = dados_filme[0][1]
         vIMDB = dados_filme[0][2]
-        vTitulo_original = dados_filme[0][3].upper()
-        vTitulo_traduzido = dados_filme[0][4].upper()
+        vTitulo_original = dados_filme[0][3]
+        vTitulo_traduzido = dados_filme[0][4]
         vPagina = dados_filme[0][6]
         vPasta = dados_filme[0][7]
-        ano = int(dados_filme[0][8][0:4])
-        mes = int(dados_filme[0][8][5:7])
-        dia = int(dados_filme[0][8][8:])
+        data_release = dados_filme[0][8]
         vLink = dados_filme[0][9]
         vSinopse = dados_filme[0][10]
         vColorido = 1 if dados_filme[0][11] == "Cores" else 0
@@ -222,11 +220,9 @@ elif pagina == "cadastro" and movie_id:
             vidFilme = None
             vTMDB = movie_id
             vIMDB = dados_filme['imdb_id']
-            vTitulo_original = dados_filme['original_title'].upper()
-            vTitulo_traduzido = dados_filme['title'].upper()
-            ano = int(dados_filme['release_date'][0:4])
-            mes = int(dados_filme['release_date'][5:7])
-            dia = int(dados_filme['release_date'][8:])
+            vTitulo_original = dados_filme['original_title']
+            vTitulo_traduzido = dados_filme['title']
+            data_release = dados_filme['release_date']
             vPagina = ""
             vPasta = ""
             vLink = f"https://image.tmdb.org/t/p/w600_and_h900_bestv2{dados_filme['poster_path']}"
@@ -237,23 +233,30 @@ elif pagina == "cadastro" and movie_id:
 
     col1, col2 = st.columns((2.5, 1))
     with col1:
-        idFilme = st.text_input('ID', value=vidFilme, disabled=True) if vidFilme else None
-        tmdb = st.text_input('TMDB', value=movie_id, disabled=True)
-        titulo_original = st.text_input('Título Original', value=vTitulo_original)
-        titulo_traduzido = st.text_input('Título Traduzido', value=vTitulo_traduzido)
-        col3, col4, col5, col6 = st.columns(4)
-        with col3:
+        col11, col12, col13, col14 = st.columns(4)
+        with col11:
+            tmdb = st.text_input('TMDB', value=movie_id, disabled=True)
+        with col12:
             imdb = st.text_input('IMDB', value=vIMDB)
-        with col4:
+        with col13:
+            ano = int(data_release[0:4])
+            mes = int(data_release[5:7])
+            dia = int(data_release[8:])
             data_release = st.date_input('Data Release', datetime.date(ano, mes, dia), format="DD/MM/YYYY")
-        with col5:
+        with col14:
+            idFilme = st.text_input('ID', value=vidFilme, disabled=True) if vidFilme else None
+        titulo_original = st.text_input('Título Original', value=vTitulo_original.upper())
+        titulo_traduzido = st.text_input('Título Traduzido', value=vTitulo_traduzido.upper())
+        col15, col16, col17 = st.columns((0.5, 0.5, 1.5))
+        with col15:
             pasta = st.text_input('Pasta', value=vPasta)
-        with col6:
+        with col16:
             pagina = st.text_input('Pagina', value=vPagina)
+        with col17:
+            cores = st.radio('Cor', ['Preto Branco', 'Cores'], index=vColorido, horizontal=True)
         link_imagem = st.text_input('Link Imagem', value=vLink)
     with col2:
-        st.image(link_imagem, width=200)
-    cores = st.radio('Cor', ['Preto Branco', 'Cores'], index=vColorido, horizontal=True)
+        st.image(link_imagem, width=250)
     sinopse = st.text_area('Sinopse', value=vSinopse, height=150)
 
     st.divider()
