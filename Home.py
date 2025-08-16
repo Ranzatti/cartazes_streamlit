@@ -40,6 +40,7 @@ def carregar_cartazes():
     dados = sql.get_all_cartazes()
     df = pd.DataFrame({
         "Poster": [linha[9] for linha in dados],
+        "ID": [linha[0] for linha in dados],
         "Ano": [linha[5] for linha in dados],
         "TMDB": [linha[1] for linha in dados],
         "IMDB": [linha[2] for linha in dados],

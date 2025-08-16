@@ -11,17 +11,18 @@ def monta_grid_pandas(df):
         use_container_width=True,
         column_config={
             "Poster": st.column_config.ImageColumn("Poster", width=2),
+            "ID": st.column_config.NumberColumn("ID", width=1),
             "Ano": st.column_config.NumberColumn(format="%d", width=2),
             "TMDB": st.column_config.NumberColumn(format="%d", width=10),
-            "IMDB": st.column_config.TextColumn(width=5),
-            "Título Original": st.column_config.TextColumn(width=500),
-            "Título Traduzido": st.column_config.Column(width=500),
+            "IMDB": st.column_config.TextColumn(width=10),
+            "Título Original": st.column_config.TextColumn(width=600),
+            "Título Traduzido": st.column_config.Column(width=600),
             "Pasta": st.column_config.NumberColumn(format="%d", width=5),
             "Página": st.column_config.NumberColumn(format="%d", width=5),
             # "Imagem": st.column_config.LinkColumn(display_text="🔗"),
             "Link TMDB": st.column_config.LinkColumn(display_text="🔗", width=10),
             "Link IMDB": st.column_config.LinkColumn(display_text="🔗", width=10),
-            "Data Release": st.column_config.DateColumn(format="DD-MM-YYYY", width=10)
+            "Data Release": st.column_config.DateColumn(format="DD-MM-YYYY", width=20)
         },
         hide_index=True,
     )

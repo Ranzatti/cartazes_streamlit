@@ -1,9 +1,6 @@
 import requests
 import streamlit as st
 import datetime
-
-from streamlit_extras.switch_page_button import switch_page
-
 import sql
 
 st.set_page_config(
@@ -100,15 +97,15 @@ def get_movie_by_id(movie_id):
         return None
 
 # Pega parâmetros da URL
-params = st.query_params
-pagina = params.get("pagina", "busca")
-movie_id = params.get("id", None)
+params_pt = st.query_params
+pagina = params_pt.get("pagina", "busca")
+movie_id = params_pt.get("id", None)
 
 st.subheader("Cadastro de Posters", divider='rainbow')
 
 # ------------------- TELA DE BUSCA -------------------
 if pagina == "busca":
-    escolha = st.radio("Opção de Busca", ["TMDB", "Titulo Original"], horizontal=True)
+    escolha = st.radio("Opção de Busca", ["Titulo Traduzido", "TMDB"], horizontal=True)
     if(escolha == "TMDB"):
         col50, col51 = st.columns((0.5, 1))
         with col50:
@@ -168,7 +165,7 @@ if pagina == "busca":
             if not results:
                 st.info("Nenhum filme encontrado.")
             else:
-                for movie in results[:10]:
+                for movie in results[:20]:
                     mid = str(movie.get("id"))
                     title = movie.get("title") or movie.get("original_title", "—")
                     year = (movie.get("release_date") or "")[:4] or "—"
@@ -178,55 +175,69 @@ if pagina == "busca":
                     cols = st.columns([1, 6])
                     with cols[0]:
                         if poster_url:
-                            st.image(poster_url, width=60)
+                            st.image(poster_url, width=80)
                         else:
                             st.write("Sem imagem")
                     with cols[1]:
-                        if st.button(f"ID: {mid} — {title} ({year})", key=mid):
+                        if st.button(f"TMDB: {mid} — {title} ({year})", key=mid):
                             st.query_params["pagina"] = "cadastro"
                             st.query_params["id"] = mid
                             st.rerun()
+                    if len(results) == 1:
+                        st.query_params["pagina"] = "cadastro"
+                        st.query_params["id"] = mid
+                        st.rerun()
 
 # ------------------- TELA DE CADASTRO -------------------
 elif pagina == "cadastro" and movie_id:
 
-    dados_filme = sql.get_dados_by_tmdb(movie_id)
+    dados_pt = sql.get_dados_by_tmdb(movie_id)
     # st.write(dados_filme)
-    if dados_filme:
+    if dados_pt:
         st.error('Já cadastrado')
-        vidFilme = dados_filme[0][0]
-        vTMDB = dados_filme[0][1]
-        vIMDB = dados_filme[0][2]
-        vTitulo_original = dados_filme[0][3]
-        vTitulo_traduzido = dados_filme[0][4]
-        vPagina = dados_filme[0][6]
-        vPasta = dados_filme[0][7]
-        data_release = dados_filme[0][8]
-        vLink = dados_filme[0][9]
-        vSinopse = dados_filme[0][10]
-        vColorido = 1 if dados_filme[0][11] == "Cores" else 0
+        vidFilme = dados_pt[0][0]
+        vTMDB = dados_pt[0][1]
+        vIMDB = dados_pt[0][2]
+        vTitulo_original = dados_pt[0][3]
+        vTitulo_traduzido = dados_pt[0][4]
+        vPagina = dados_pt[0][6]
+        vPasta = dados_pt[0][7]
+        data_release = dados_pt[0][8]
+        vLink = dados_pt[0][9]
+        vSinopse = dados_pt[0][10]
+        vColorido = 1 if dados_pt[0][11] == "Cores" else 0
     else:
         st.success('Novo Cadastro')
 
         url = f"https://api.themoviedb.org/3/movie/{movie_id}"
-        params = {
+        params_pt = {
             "api_key": TMDB_API_KEY,
             "language": "pt-BR",
             "include_adult": "false"
         }
-        resposta = requests.get(url, params=params, timeout=8)
-        if resposta.status_code == 200:
-            dados_filme = resposta.json()
+        params_en = {
+            "api_key": TMDB_API_KEY,
+            "language": "en-US",
+            "include_adult": "false"
+        }
+        resposta_pt = requests.get(url, params=params_pt, timeout=8)
+        resposta_en = requests.get(url, params=params_en, timeout=8)
+
+        if resposta_pt.status_code == 200 and resposta_en.status_code == 200:
+            dados_pt = resposta_pt.json()
+            dados_en = resposta_en.json()
+
             vidFilme = None
             vTMDB = movie_id
-            vIMDB = dados_filme['imdb_id']
-            vTitulo_original = dados_filme['original_title']
-            vTitulo_traduzido = dados_filme['title']
-            data_release = dados_filme['release_date']
-            vPagina = ""
-            vPasta = ""
-            vLink = f"https://image.tmdb.org/t/p/w600_and_h900_bestv2{dados_filme['poster_path']}"
-            vSinopse = dados_filme['overview']
+            vIMDB = dados_pt['imdb_id']
+            vTitulo_original = dados_pt['original_title']
+            vTitulo_traduzido = dados_pt['title']
+            data_release = dados_pt['release_date']
+            vPagina = 0
+            vPasta = 0
+            # vLink = f"https://image.tmdb.org/t/p/w600_and_h900_bestv2{dados_filme['poster_path']}"
+            vLink = f"https://image.tmdb.org/t/p/w600_and_h900_bestv2{dados_en['poster_path']}"
+            vSinopse = dados_pt['overview']
             vColorido = 1
         else:
             st.error('Ops deu erro na busca do filme')
@@ -254,7 +265,7 @@ elif pagina == "cadastro" and movie_id:
             pagina = st.text_input('Pagina', value=vPagina)
         with col17:
             cores = st.radio('Cor', ['Preto Branco', 'Cores'], index=vColorido, horizontal=True)
-        link_imagem = st.text_input('Link Imagem', value=vLink)
+        link_imagem = st.text_input('Link Imagem', value=vLink, width=700)
     with col2:
         st.image(link_imagem, width=250)
     sinopse = st.text_area('Sinopse', value=vSinopse, height=150)
