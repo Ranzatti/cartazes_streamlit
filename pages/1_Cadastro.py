@@ -2,6 +2,7 @@ import requests
 import streamlit as st
 import datetime
 import sql
+from datetime import datetime
 
 st.set_page_config(
     page_title="Cadastro de Posters",
@@ -73,8 +74,17 @@ def search_movies(query):
     params = {
         "api_key": TMDB_API_KEY,
         "query": query,
-        "language": "pt-BR"
+        "language": "pt-BR",
+        "include_adult": "false"
     }
+
+    # params = {
+    #     "api_key": TMDB_API_KEY,
+    #     "language": "en-US",
+    #     "query": query,
+    #     "include_adult": "false"
+    # }
+
     resp = requests.get(url, params=params, timeout=8)
     resp.raise_for_status()
     return resp.json().get("results", [])
@@ -102,6 +112,13 @@ pagina = params_pt.get("pagina", "busca")
 movie_id = params_pt.get("id", None)
 
 st.subheader("Cadastro de Posters", divider='rainbow')
+
+
+def enviar():
+    st.query_params["pagina"] = "cadastro"
+    st.query_params["id"] = mid
+    st.rerun()
+
 
 # ------------------- TELA DE BUSCA -------------------
 if pagina == "busca":
@@ -141,17 +158,16 @@ if pagina == "busca":
                 poster_url = f"{TMDB_IMAGE_BASE}{poster_path}" if poster_path else None
 
                 cols = st.columns([1, 6])
-                with cols[0]:
-                    if poster_url:
-                        st.image(poster_url, width=60)
-                    else:
-                        st.write("Sem imagem")
-                with cols[1]:
-                    # O botão agora apenas confirma a seleção do filme
-                    if st.button(f"ID: {mid} — {title} ({year})", key=mid):
-                        st.query_params["pagina"] = "cadastro"
-                        st.query_params["id"] = mid
-                        st.rerun()
+                enviar()
+                # with cols[0]:
+                #     if poster_url:
+                #         st.image(poster_url, width=60)
+                #     else:
+                #         st.write("Sem imagem")
+                # with cols[1]:
+                #     # O botão agora apenas confirma a seleção do filme
+                #     if st.button(f"ID: {mid} — {title} ({year})", key=mid):
+                #         pass
     else:
         query = st.text_input("Digite o nome do filme (mínimo 2 caracteres)")
         if query and len(query) >= 2:
@@ -180,19 +196,15 @@ if pagina == "busca":
                             st.write("Sem imagem")
                     with cols[1]:
                         if st.button(f"TMDB: {mid} — {title} ({year})", key=mid):
-                            st.query_params["pagina"] = "cadastro"
-                            st.query_params["id"] = mid
-                            st.rerun()
+                           enviar()
                     if len(results) == 1:
-                        st.query_params["pagina"] = "cadastro"
-                        st.query_params["id"] = mid
-                        st.rerun()
+                        enviar()
 
 # ------------------- TELA DE CADASTRO -------------------
 elif pagina == "cadastro" and movie_id:
 
     dados_pt = sql.get_dados_by_tmdb(movie_id)
-    # st.write(dados_filme)
+    # st.write(dados_pt)
     if dados_pt:
         st.error('Já cadastrado')
         vidFilme = dados_pt[0][0]
@@ -202,7 +214,7 @@ elif pagina == "cadastro" and movie_id:
         vTitulo_traduzido = dados_pt[0][4]
         vPagina = dados_pt[0][6]
         vPasta = dados_pt[0][7]
-        data_release = dados_pt[0][8]
+        vData_release = dados_pt[0][8]
         vLink = dados_pt[0][9]
         vSinopse = dados_pt[0][10]
         vColorido = 1 if dados_pt[0][11] == "Cores" else 0
@@ -223,6 +235,7 @@ elif pagina == "cadastro" and movie_id:
         resposta_pt = requests.get(url, params=params_pt, timeout=8)
         resposta_en = requests.get(url, params=params_en, timeout=8)
 
+
         if resposta_pt.status_code == 200 and resposta_en.status_code == 200:
             dados_pt = resposta_pt.json()
             dados_en = resposta_en.json()
@@ -232,7 +245,7 @@ elif pagina == "cadastro" and movie_id:
             vIMDB = dados_pt['imdb_id']
             vTitulo_original = dados_pt['original_title']
             vTitulo_traduzido = dados_pt['title']
-            data_release = dados_pt['release_date']
+            vData_release = dados_pt['release_date']
             vPagina = 0
             vPasta = 0
             # vLink = f"https://image.tmdb.org/t/p/w600_and_h900_bestv2{dados_filme['poster_path']}"
@@ -250,10 +263,7 @@ elif pagina == "cadastro" and movie_id:
         with col12:
             imdb = st.text_input('IMDB', value=vIMDB)
         with col13:
-            ano = int(data_release[0:4])
-            mes = int(data_release[5:7])
-            dia = int(data_release[8:])
-            data_release = st.date_input('Data Release', datetime.date(ano, mes, dia), format="DD/MM/YYYY")
+            data_release = st.date_input('Data Release', vData_release, format="DD/MM/YYYY")
         with col14:
             idFilme = st.text_input('ID', value=vidFilme, disabled=True) if vidFilme else None
         titulo_original = st.text_input('Título Original', value=vTitulo_original.upper())
