@@ -1,8 +1,8 @@
 import re
 from connection import conn
 
-TABELA = "CARTAZES"
-# TABELA = "POSTERS"
+# TABELA = "CARTAZES"
+TABELA = "POSTERS"
 
 def get_all_cartazes():
     consulta = f"SELECT * FROM {TABELA} ORDER BY ANO, DATA_RELEASE, TMDB"

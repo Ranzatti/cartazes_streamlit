@@ -15,6 +15,7 @@ st.set_page_config(
 TMDB_API_KEY = "2b0120b7e901bbe70b631b2273fe28c9"
 TMDB_IMAGE_BASE = "https://image.tmdb.org/t/p/w92"
 
+
 def mostrar_posters_do_filme(movie_id):
     url = f"https://api.themoviedb.org/3/movie/{movie_id}/images"
     params = {
@@ -38,6 +39,7 @@ def mostrar_posters_do_filme(movie_id):
             poster_url = f"https://image.tmdb.org/t/p/w300{poster['file_path']}"
             with cols[i % num_colunas]:
                 st.image(poster_url, width=120)
+
 
 def mostrar_elenco(movie_id, num_colunas=8):
     url = f"https://api.themoviedb.org/3/movie/{movie_id}/credits"
@@ -75,26 +77,21 @@ def search_movies(query):
         "api_key": TMDB_API_KEY,
         "query": query,
         "language": "pt-BR",
-        "include_adult": "false"
+        # "language": "en-US",
+        "include_adult": "false",
     }
-
-    # params = {
-    #     "api_key": TMDB_API_KEY,
-    #     "language": "en-US",
-    #     "query": query,
-    #     "include_adult": "false"
-    # }
-
     resp = requests.get(url, params=params, timeout=8)
     resp.raise_for_status()
     return resp.json().get("results", [])
+
 
 def get_movie_by_id(movie_id):
     try:
         url = f"https://api.themoviedb.org/3/movie/{movie_id}"
         params = {
             "api_key": TMDB_API_KEY,
-            "language": "pt-BR"
+            "language": "pt-BR",
+            "include_adult": "false"
         }
         resp = requests.get(url, params=params, timeout=8)
         resp.raise_for_status()  # Lança um erro para status de erro HTTP
@@ -105,6 +102,7 @@ def get_movie_by_id(movie_id):
     except Exception as e:
         st.error(f"Ocorreu um erro: {e}")
         return None
+
 
 # Pega parâmetros da URL
 params_pt = st.query_params
@@ -122,35 +120,28 @@ def enviar():
 
 # ------------------- TELA DE BUSCA -------------------
 if pagina == "busca":
-    escolha = st.radio("Opção de Busca", ["Titulo Traduzido", "TMDB"], horizontal=True)
-    if(escolha == "TMDB"):
+    escolha = st.radio("Opção de Busca", ["Titulo Traduzido / Original", "TMDB"], horizontal=True)
+    if (escolha == "TMDB"):
         col50, col51 = st.columns((0.5, 1))
         with col50:
             query = st.text_input("Digite o TMDB")
 
         if query:
-            # Tenta converter o input para um número inteiro, pois IDs são numéricos
             try:
                 movie_id = int(query)
-                # O spinner mostra que a busca está em andamento
                 with st.spinner(f"Buscando filme com o ID {movie_id}..."):
-                    # Chama a nova função para buscar um único filme
                     movie = get_movie_by_id(movie_id)
 
             except ValueError:
-                # Lida com o caso em que o input não é um número válido
                 st.error("O código do TMDb deve ser um número inteiro.")
                 movie = None
             except Exception as e:
-                # Lida com outros erros inesperados na busca
                 st.error(f"Erro ao buscar o filme: {e}")
                 movie = None
 
-            # Verifica se um filme foi encontrado
             if not movie:
                 st.info("Nenhum filme encontrado com este código.")
             else:
-                # Se o filme foi encontrado, exibe as informações e o botão de cadastro
                 mid = str(movie.get("id"))
                 title = movie.get("title") or movie.get("original_title", "—")
                 year = (movie.get("release_date") or "")[:4] or "—"
@@ -174,6 +165,7 @@ if pagina == "busca":
             try:
                 with st.spinner("Buscando no TMDb..."):
                     results = search_movies(query)
+                    st.write(results)
             except Exception as e:
                 st.error(f"Erro ao buscar filmes: {e}")
                 results = []
@@ -183,7 +175,9 @@ if pagina == "busca":
             else:
                 for movie in results[:20]:
                     mid = str(movie.get("id"))
-                    title = movie.get("title") or movie.get("original_title", "—")
+                    # title = movie.get("title") or movie.get("original_title", "—")
+                    title = movie.get("title")
+                    title_original = movie.get("original_title")
                     year = (movie.get("release_date") or "")[:4] or "—"
                     poster_path = movie.get("poster_path")
                     poster_url = f"{TMDB_IMAGE_BASE}{poster_path}" if poster_path else None
@@ -195,8 +189,8 @@ if pagina == "busca":
                         else:
                             st.write("Sem imagem")
                     with cols[1]:
-                        if st.button(f"TMDB: {mid} — {title} ({year})", key=mid):
-                           enviar()
+                        if st.button(f"TMDB: {mid} — {title} - {title_original} - ({year})", key=mid):
+                            enviar()
                     if len(results) == 1:
                         enviar()
 
@@ -218,8 +212,10 @@ elif pagina == "cadastro" and movie_id:
         vLink = dados_pt[0][9]
         vSinopse = dados_pt[0][10]
         vColorido = 1 if dados_pt[0][11] == "Cores" else 0
+        bExiste = True
     else:
         st.success('Novo Cadastro')
+        bExiste = False
 
         url = f"https://api.themoviedb.org/3/movie/{movie_id}"
         params_pt = {
@@ -235,7 +231,6 @@ elif pagina == "cadastro" and movie_id:
         resposta_pt = requests.get(url, params=params_pt, timeout=8)
         resposta_en = requests.get(url, params=params_en, timeout=8)
 
-
         if resposta_pt.status_code == 200 and resposta_en.status_code == 200:
             dados_pt = resposta_pt.json()
             dados_en = resposta_en.json()
@@ -248,7 +243,7 @@ elif pagina == "cadastro" and movie_id:
             vData_release = dados_pt['release_date']
             vPagina = 0
             vPasta = 0
-            # vLink = f"https://image.tmdb.org/t/p/w600_and_h900_bestv2{dados_filme['poster_path']}"
+            # vLink = f"https://image.tmdb.org/t/p/w600_and_h900_bestv2{dados_pt['poster_path']}"
             vLink = f"https://image.tmdb.org/t/p/w600_and_h900_bestv2{dados_en['poster_path']}"
             vSinopse = dados_pt['overview']
             vColorido = 1
@@ -282,24 +277,29 @@ elif pagina == "cadastro" and movie_id:
 
     st.divider()
 
-    mostrar_posters_do_filme(movie_id)
+    # pegando cartazes
+    with st.expander("Cartazes"):
+        mostrar_posters_do_filme(movie_id)
+
+    # pegando o elento
+    with st.expander("Elenco"):
+        mostrar_elenco(movie_id)
 
     st.divider()
 
-    # pegando o elento
-    # mostrar_elenco(movie_id)
-
-    #Botoes
+    # Botoes
     col20, col21, col22 = st.columns([2, 2, 8])
     with col20:
-        if st.button('Salvar', type="primary"):
-            if sql.merge(idFilme, tmdb, imdb, titulo_original, titulo_traduzido, pagina, pasta, data_release, link_imagem, sinopse, cores):
-                st.query_params.clear()
-                st.query_params["pagina"] = "busca"
-                st.rerun()
-            else:
-                with col22:
-                    st.error('Ops deu erro')
+        if not bExiste:
+            if st.button('Salvar', type="primary"):
+                if sql.merge(idFilme, tmdb, imdb, titulo_original, titulo_traduzido, pagina, pasta, data_release,
+                             link_imagem, sinopse, cores):
+                    st.query_params.clear()
+                    st.query_params["pagina"] = "busca"
+                    st.rerun()
+                else:
+                    with col22:
+                        st.error('Ops deu erro')
 
     with col21:
         if st.button("⬅ Voltar"):
@@ -309,7 +309,3 @@ elif pagina == "cadastro" and movie_id:
 
     st.divider()
     # ate aqui
-
-
-
-

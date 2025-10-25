@@ -59,8 +59,8 @@ def carregar_cartazes():
 df = carregar_cartazes()
 # dados = sql.get_cartazes(anos_select, cores_select, pasta_select)
 
-# util.monta_grid_pandas(df)
-util.monta_grid_aggrid(df)
+util.monta_grid_pandas(df)
+# util.monta_grid_aggrid(df)
 
 st.divider()
 
